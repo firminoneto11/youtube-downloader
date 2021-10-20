@@ -23,7 +23,7 @@ class Downloader:
             mkdir(cls.save_dir)
 
     @classmethod
-    def download(cls, url: str) -> None:
+    def download(cls, url: str) -> str:
         # Checking id the directory exists
         cls.check_output()
 
