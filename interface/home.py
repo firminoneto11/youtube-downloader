@@ -49,30 +49,32 @@ class Home:
             self.download.update()
             messagebox.showwarning(title="Link invalid", message="Please enter valid youtube url!")
             return
-        try:
-            def callback(returned_value):
-                # Displaying a message informing the user that the download is finished and opening the directory. If 
-                # the video isn't available within the ideal conditions, it notifies the user as well.
-                if isabs(returned_value):
-                    response = messagebox.showinfo(title="Download completed", message="Download completed successfully!")
-                    if response:
-                        path = returned_value.split('\\')
-                        path.pop()
-                        webbrowser.open(join(*path))
-                else:
-                    messagebox.showwarning(title="Low quality", message=returned_value)
 
-                # Reseting the state of the download button
-                self.download.config(state=ACTIVE, text="Download")
-                self.download.update()
+        def resolve(returned_value):
+            """ Callback function that the Thread will call when it has finished it's work, in case of success """
 
-            downloader_thread = Thread(target=Downloader.download, args=[url, callback], daemon=True)
-            downloader_thread.start()
-            # TODO: Encontrar uma forma de qualquer exceção lançada na Thread, lançar aqui tb
-        except Exception as error:
-            # Handling errors
+            # Displaying a message informing the user that the download is finished and opening the directory. If 
+            # the video isn't available within the ideal conditions, it notifies the user as well.
+            if isabs(returned_value):
+                response = messagebox.showinfo(title="Download completed", message="Download completed successfully!")
+                if response:
+                    path = returned_value.split('\\')
+                    path.pop()
+                    webbrowser.open(join(*path))
+            else:
+                messagebox.showwarning(title="Low quality", message=returned_value)
+
+            # Reseting the state of the download button
+            self.download.config(state=ACTIVE, text="Download")
+            self.download.update()
+        
+        def reject(error):
+            """ Callback function that the Thread will call when it has finished it's work, in case of failure """
+
             messagebox.showerror(title="A problem occurred", message=f"A problem occurred while downloading the requested video. More details about it:\n\n{error}")
 
             # Reseting the state of the download button
             self.download.config(state=ACTIVE, text="Download")
             self.download.update()
+
+        Thread(target=Downloader.download, args=[url, resolve, reject], daemon=True).start()
