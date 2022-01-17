@@ -5,6 +5,7 @@ from .base import Tkinter
 from engine.downloader import Downloader
 import webbrowser
 from os.path import join, isabs
+from threading import Thread
 
 
 class Home:
@@ -47,24 +48,31 @@ class Home:
             self.download.config(state=ACTIVE, text="Download")
             self.download.update()
             messagebox.showwarning(title="Link invalid", message="Please enter valid youtube url!")
-            return None
+            return
         try:
-            returned_value = Downloader.download(url=url)
+            def callback(returned_value):
+                # Displaying a message informing the user that the download is finished and opening the directory. If 
+                # the video isn't available within the ideal conditions, it notifies the user as well.
+                if isabs(returned_value):
+                    response = messagebox.showinfo(title="Download completed", message="Download completed successfully!")
+                    if response:
+                        path = returned_value.split('\\')
+                        path.pop()
+                        webbrowser.open(join(*path))
+                else:
+                    messagebox.showwarning(title="Low quality", message=returned_value)
+
+                # Reseting the state of the download button
+                self.download.config(state=ACTIVE, text="Download")
+                self.download.update()
+
+            downloader_thread = Thread(target=Downloader.download, args=[url, callback], daemon=True)
+            downloader_thread.start()
+            # TODO: Encontrar uma forma de qualquer exceção lançada na Thread, lançar aqui tb
         except Exception as error:
             # Handling errors
             messagebox.showerror(title="A problem occurred", message=f"A problem occurred while downloading the requested video. More details about it:\n\n{error}")
-        else:
-            # Displaying a message informing the user that the download is finished and opening the directory. If the 
-            # video isn't available within the ideal conditions, it notifies the user as well.
-            if isabs(returned_value):
-                response = messagebox.showinfo(title="Download completed", message="Download completed successfully!")
-                if response:
-                    path = returned_value.split('\\')
-                    path.pop()
-                    webbrowser.open(join(*path))
-            else:
-                messagebox.showwarning(title="Low quality", message=returned_value)
-        finally:
+
             # Reseting the state of the download button
             self.download.config(state=ACTIVE, text="Download")
             self.download.update()

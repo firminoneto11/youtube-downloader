@@ -23,7 +23,7 @@ class Downloader:
             mkdir(cls.save_dir)
 
     @classmethod
-    def download(cls, url: str) -> str:
+    def download(cls, url: str, callback) -> str:
         # Checking id the directory exists
         cls.check_output()
 
@@ -37,10 +37,10 @@ class Downloader:
         # Checking the filtered results and downloading the video
         if len(videos) == 0:
             # Returning a generic message in case the quality of the videos found aren't that great
-            return "Unfortunately the desired video is not available within the ideal settings..."
+            return callback("Unfortunately the desired video is not available within the ideal settings...")
         # Downloading and outputting the path
         elif len(videos) == 1:
-            return videos[0].download(output_path=cls.save_dir)
+            return callback(videos[0].download(output_path=cls.save_dir))
         # Filtering the videos returned by the previous query
         elif len(videos) > 1:
             best_available = None
@@ -64,4 +64,4 @@ class Downloader:
                     best_available = video
                     break
             # Downloading and outputting the path
-            return best_available.download(output_path=cls.save_dir)
+            return callback(best_available.download(output_path=cls.save_dir))
